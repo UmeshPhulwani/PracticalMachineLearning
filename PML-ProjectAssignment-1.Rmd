@@ -1,0 +1,90 @@
+Practical Machine Learning- Prediction Assignment Writeup
+========================================================
+
+This project is about predicting the user activity in the form of the excercise. The data is collected Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. Goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har .
+
+The goal of of this analysis was to predict the classe variable using data.
+Actual meaning of the variables was ignored for this analysis.
+
+## The data is divided into Training set and Test Set.
+
+
+Training data set 
+-----------------
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">pml-training.csv</a>
+
+Testing data set
+-----------------
+<a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">pml-testing.csv</a>
+
+# Setting up the libraris and environment options
+```{r setup, echo = FALSE}
+opts_chunk$set(cache = TRUE)
+setwd("C:/Coursera/Practical Machine Learning/wrkingD")
+library(randomForest)
+library(caret)
+library(e1071)
+```
+
+## Reading and Cleaning the data
+* Data is read from the working directory.
+```{r}
+train <- read.csv("pml-training.csv")
+test <- read.csv("pml-testing.csv")
+```
+
+```{r}
+tsize <- 1000
+cvsize <- 3000
+```
+* Columns are ignored which are not useful.
+```{r}
+ccs <- which(sapply(names(train), function(i)
+                    class(train[,i])) != "factor")
+classe <- train$classe
+train <- train[,ccs]
+test <- test[,ccs]
+```
+* Clean the data where NA and timestamps are cleaned
+```{r}
+sapply(1:ncol(train), function(i) nrow(train[is.na(train[,i]),]))
+sapply(1:ncol(test), function(i) nrow(test[is.na(test[,i]),]))
+nacols <- which(sapply(1:ncol(test), function(i) all(is.na(test[,i]))))
+test <- test[,-c(1:4,nacols)]
+train <- train[,-c(1:4,nacols)]
+```
+## Plot the graph to look at the variables density i.e to understand the pattern of different exercises 
+```{r}
+qplot(classe, data = train, geom = "density")
+```
+
+
+## Build the classification model
+* I will use random forest with default settings, it will helps as there is no need to for cross-validation.Estimations is done internally.
+check the summary.
+Use seed data to reduce the processing time.
+```{r}
+set.seed(1000)
+samp <- sample(1:nrow(train), tsize)
+trn <- train[samp,]
+cs <- classe[samp]
+modelfit <- train(cs ~., method = "rf", data = trn, verbose=FALSE)
+
+pred <- predict(modelfit, test)
+```
+```{r}
+confusion = modelfit$confusion
+sensitivity = (confusion[2, 2]/(confusion[2, 2] + confusion[2, 1])) * 100
+specificity = (confusion[1, 1]/(confusion[1, 1] + confusion[1, 2])) * 100
+overall_error = modelfit$err.rate[length(modelfit$err.rate[, 1]), 1] * 100
+overall_accuracy = 1 - overall_error
+class1_error = paste(rownames(confusion)[1], " error rate= ", confusion[1, 3], 
+    sep = "")
+class2_error = paste(rownames(confusion)[2], " error rate= ", confusion[2, 3], 
+    sep = "")
+overall_accuracy = 100 - overall_error
+```
+## Check the summary to see how the model has performed
+```{r}
+summary(modelfit)
+```
