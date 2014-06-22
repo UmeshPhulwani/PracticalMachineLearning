@@ -162,3 +162,21 @@ summary(modelfit)
 ## obsLevels          5   -none-     character
 ```
 
+
+## Cross-validation and accuracy
+
+
+```r
+cvsamp <- sample(1:nrow(train)[-samp], cvsize)
+cv <- train[cvsamp, ]
+cvpred <- predict(modelfit, cv)
+confMatrix <- confusionMatrix(classe[cvsamp], cvpred)
+accuracy <- confMatrix$overall[["Accuracy"]]
+lwraccuracy <- confMatrix$overall[["AccuracyLower"]]
+upraccuracy <- confMatrix$overall[["AccuracyUpper"]]
+
+plot(modelfit, main = "Accuracy / Predictors")
+```
+
+![plot of chunk cv](figure/cv.png) 
+

@@ -88,3 +88,17 @@ overall_accuracy = 100 - overall_error
 ```{r}
 summary(modelfit)
 ```
+
+## Cross-validation and accuracy
+
+```{r cv}
+cvsamp <- sample(1:nrow(train)[-samp], cvsize)
+cv <- train[cvsamp, ]
+cvpred <- predict(modelfit, cv)
+confMatrix <- confusionMatrix(classe[cvsamp], cvpred)
+accuracy <- confMatrix$overall[["Accuracy"]]
+lwraccuracy <- confMatrix$overall[["AccuracyLower"]]
+upraccuracy <- confMatrix$overall[["AccuracyUpper"]]
+
+plot(modelfit, main = "Accuracy / Predictors")
+```
